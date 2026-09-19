@@ -89,3 +89,7 @@ function selectCard(index) {
     cards.forEach(c => c.classList.remove('selected'));
     cards[index].classList.add('selected');
 }
+// --- REGISTRAZIONE SERVICE WORKER (Per Schermo Intero & Offline) ---
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+}
