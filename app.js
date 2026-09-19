@@ -4,13 +4,20 @@ const ctx = canvas.getContext('2d');
 let isDrawing = false;
 let eraseStep = 0;
 
-// Ridimensionamento dinamico del canvas
+// Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+// Reset totale profondo (elimina ogni micro-alone grigio)
+function clearCanvasCompletely() {
+    // Il reset della larghezza distrugge la memoria dei pixel a livello hardware
+    canvas.width = window.innerWidth;
+    ctx.beginPath();
+}
 
 // Cambio colore istantaneo al tocco
 document.addEventListener('DOMContentLoaded', () => {
@@ -75,7 +82,7 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio con pulizia totale priva di aloni
+// Sensore Giroscopio con azzeramento hardware del canvas
 window.addEventListener('deviceorientation', (e) => {
     const beta = e.beta;   // Inclinazione avanti/indietro (-180 a 180)
     const gamma = e.gamma; // Inclinazione sinistra/destra (-90 a 90)
@@ -86,18 +93,18 @@ window.addEventListener('deviceorientation', (e) => {
     if (isTiltedForward && isStableSide) {
         eraseStep++;
         
-        // Applica strati di bianco per la sfumatura iniziale
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        // Sfumatura iniziale graduale
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Dopo circa 10 passaggi (meno di un secondo), formatta del tutto la tela
-        if (eraseStep > 10) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Dopo la sfumatura (circa 8-10 frame), esegue il reset totale dei pixel
+        if (eraseStep > 8) {
+            clearCanvasCompletely();
         }
     } else {
-        // Quando il telefono torna in posizione normale, se si era attivata la cancellazione, fa reset totale
+        // Se la cancellazione si era avviata, al ritorno in posizione pulisce del tutto
         if (eraseStep > 0) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            clearCanvasCompletely();
             eraseStep = 0;
         }
     }
