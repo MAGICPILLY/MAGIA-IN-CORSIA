@@ -84,9 +84,9 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Gestione Sensori con Differenziale di Gravità Diretto
+// Gestione Sensori Ricalibrata (Xiaomi 15T Pro - Lock Portrait)
 window.addEventListener('devicemotion', (e) => {
-    // Se l'utente sta toccando/disegnando, blocca qualsiasi scansione
+    // Se stai toccando o disegnando, blocca qualsiasi conteggio
     if (isDrawing) {
         flatFramesCount = 0;
         return;
@@ -99,22 +99,22 @@ window.addEventListener('devicemotion', (e) => {
     const absY = Math.abs(acc.y || 0);
     const absZ = Math.abs(acc.z || 0);
 
-    // Condizione fisica di "Telefono Sdraiato Piatto":
-    // La gravità spinge quasi interamente sull'asse Z (perpendicolare allo schermo > 8.0 m/s²)
-    // e gli assi X e Y (lungo la superficie dello schermo) sono quasi azzerati (< 3.5 m/s²).
-    const isPhysicalFlat = absZ > 8.0 && absY < 3.5 && absX < 3.5;
+    // Condizione di "Telefono Piatto/Orizzontale REALE":
+    // 1. Z > 8.8 (la gravità scarica quasi del tutto perpendicolare al display)
+    // 2. Y < 2.2 (impedisce la cancellazione con il bordo piegato a 45° verso di te)
+    const isStrictlyFlat = absZ > 8.8 && absY < 2.2 && absX < 2.5;
 
-    if (isPhysicalFlat) {
+    if (isStrictlyFlat) {
         flatFramesCount++;
-        // Richiede almeno 4 frame consecutivi in posizione orizzontale prima di attivare la cancellazione
-        if (flatFramesCount > 4) {
+        // Richiede stabilità in posizione orizzontale per qualche frame
+        if (flatFramesCount > 5) {
             isErasing = true;
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
     } else {
         flatFramesCount = 0;
-        // Appena il telefono torna in posizione verticale/impugnata, se era avviata la cancellazione pialla la tela
+        // Quando lo rialzi in posizione normale/verticale, pialla del tutto il canvas a zero aloni
         if (isErasing) {
             clearCanvasCompletely();
             isErasing = false;
