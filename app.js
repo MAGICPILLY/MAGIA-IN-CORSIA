@@ -11,17 +11,19 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Impostazione colore reattiva (senza ritardo)
-function setColor(color) {
-    currentColor = color;
-}
+// Cambio colore immediato su sfioramento
+document.addEventListener('DOMContentLoaded', () => {
+    const colorButtons = document.querySelectorAll('.color-btn');
+    
+    colorButtons.forEach(btn => {
+        const applyColor = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            currentColor = btn.getAttribute('data-color');
+        };
 
-// Associa l'evento di tocco immediato ai bottoni colore
-document.querySelectorAll('.color-btn').forEach(btn => {
-    btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        const bg = e.target.style.background || e.target.style.backgroundColor;
-        setColor(bg);
+        btn.addEventListener('pointerdown', applyColor, { passive: false });
+        btn.addEventListener('touchstart', applyColor, { passive: false });
     });
 });
 
