@@ -83,26 +83,28 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio: Attivazione in posizione ORIZZONTALE
+// Sensore Giroscopio: Attivazione ESCLUSIVA in posizione ORIZZONTALE (piatto)
 window.addEventListener('deviceorientation', (e) => {
-    // Ignora il giroscopio se il dito sta disegnando
+    // Ignora il giroscopio se l'utente sta disegnando
     if (isDrawing) return;
 
-    const beta = e.beta;   // Inclinazione dritto/orizzontale
+    const beta = e.beta;   // Inclinazione avanti/indietro
     const gamma = e.gamma; // Inclinazione sinistra/destra
 
-    // In posizione verticale/impugnatura beta è circa 60°-90°.
-    // Quando lo sdrai quasi in orizzontale, beta scende sotto i 25°.
-    const isHorizontal = (beta < 25 && beta > -25);
-    const isStableSide = Math.abs(gamma) < 35;
+    // Telefono piatto/sdraiato orizzontalmente:
+    // beta è compreso strettamente tra 0° e 25° (non verticale, non verso il petto)
+    // gamma è compreso strettamente tra -20° e 20°
+    const isFlatHorizontal = (beta >= 0 && beta <= 25);
+    const isStableSide = Math.abs(gamma) < 20;
 
-    if (isHorizontal && isStableSide) {
+    if (isFlatHorizontal && isStableSide) {
         isErasing = true;
-        // Dissolvenza veloce
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        // Dissolvenza graduale
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
-        // Appena rialzi il telefono in verticale, formatta la tela a bianco puro
+        // Appena il telefono esce dalla posizione orizzontale (es. torna dritto in verticale),
+        // se era partita la cancellazione, fa il reset pulito a zero aloni.
         if (isErasing) {
             clearCanvasCompletely();
             isErasing = false;
