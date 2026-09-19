@@ -2,8 +2,11 @@ let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
-let isErasing = false;
-let flatFramesCount = 0;
+
+// Tracciamento del doppio tocco per la cancellazione
+let lastTapTime = 0;
+const TAP_DELAY = 300; // Tempo massimo tra i due tocchi (ms)
+const CORNER_SIZE = 80; // Area attiva in alto a sinistra (80x80px)
 
 // Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
@@ -35,11 +38,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Gestione Disegno Libero
+// Gestione Disegno e Riconoscimento Double Tap
 function startDrawing(e) {
-    isErasing = false;
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+    // Verifichiamo se il tocco avviene nell'angolo superiore sinistro
+    if (x <= CORNER_SIZE && y <= CORNER_SIZE) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+
+        if (tapLength < TAP_DELAY && tapLength > 0) {
+            // Riconosciuto Double Tap: Esegue la cancellazione magica
+            e.preventDefault();
+            isDrawing = false;
+            
+            // Effetto dissolvenza rapida seguito da reset totale dei pixel
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            setTimeout(() => {
+                clearCanvasCompletely();
+            }, 100);
+
+            lastTapTime = 0;
+            return;
+        }
+        lastTapTime = currentTime;
+    }
+
+    // Se non è un double tap di cancellazione, avvia il disegno normale
     isDrawing = true;
-    flatFramesCount = 0;
     draw(e);
 }
 
@@ -83,41 +112,3 @@ function toggleMode() {
     canvasMode.classList.toggle('active');
     cardsMode.classList.toggle('active');
 }
-
-// Gestione Sensori Ricalibrata (Xiaomi 15T Pro - Lock Portrait)
-window.addEventListener('devicemotion', (e) => {
-    // Se stai toccando o disegnando, blocca qualsiasi conteggio
-    if (isDrawing) {
-        flatFramesCount = 0;
-        return;
-    }
-
-    const acc = e.accelerationIncludingGravity;
-    if (!acc) return;
-
-    const absX = Math.abs(acc.x || 0);
-    const absY = Math.abs(acc.y || 0);
-    const absZ = Math.abs(acc.z || 0);
-
-    // Condizione di "Telefono Piatto/Orizzontale REALE":
-    // 1. Z > 8.8 (la gravità scarica quasi del tutto perpendicolare al display)
-    // 2. Y < 2.2 (impedisce la cancellazione con il bordo piegato a 45° verso di te)
-    const isStrictlyFlat = absZ > 8.8 && absY < 2.2 && absX < 2.5;
-
-    if (isStrictlyFlat) {
-        flatFramesCount++;
-        // Richiede stabilità in posizione orizzontale per qualche frame
-        if (flatFramesCount > 5) {
-            isErasing = true;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-    } else {
-        flatFramesCount = 0;
-        // Quando lo rialzi in posizione normale/verticale, pialla del tutto il canvas a zero aloni
-        if (isErasing) {
-            clearCanvasCompletely();
-            isErasing = false;
-        }
-    }
-});
