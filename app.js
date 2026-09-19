@@ -1,3 +1,12 @@
+// FORZA L'AGGIORNAMENTO DELLA PWA (Bypassa la cache locale)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (let registration of registrations) {
+            registration.update();
+        }
+    });
+}
+
 let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
@@ -5,8 +14,8 @@ let isDrawing = false;
 
 // Tracciamento del doppio tocco per la cancellazione
 let lastTapTime = 0;
-const TAP_DELAY = 300; // Tempo massimo tra i due tocchi (ms)
-const CORNER_SIZE = 80; // Area attiva in alto a sinistra (80x80px)
+const TAP_DELAY = 350; // Millisecondi massimi tra i 2 tocchi
+const CORNER_SIZE = 90; // Area in alto a sinistra (90x90px)
 
 // Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
@@ -16,7 +25,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Reset totale profondo (elimina ogni micro-alone grigio)
+// Reset totale profondo (elimina ogni micro-alone)
 function clearCanvasCompletely() {
     canvas.width = window.innerWidth;
     ctx.beginPath();
@@ -34,40 +43,43 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         btn.addEventListener('pointerdown', applyColor, { passive: false });
-        btn.addEventListener('touchstart', applyColor, { passive: false });
     });
 });
 
 // Gestione Disegno e Riconoscimento Double Tap
 function startDrawing(e) {
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    // Gestione unificata coordinate per Pointer Events
+    const x = e.clientX;
+    const y = e.clientY;
 
-    // Verifichiamo se il tocco avviene nell'angolo superiore sinistro
+    // Controllo se il tocco avviene nell'angolo in alto a sinistra
     if (x <= CORNER_SIZE && y <= CORNER_SIZE) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTapTime;
 
         if (tapLength < TAP_DELAY && tapLength > 0) {
-            // Riconosciuto Double Tap: Esegue la cancellazione magica
+            // Riconosciuto Double Tap: Blocca il disegno ed esegue il reset
             e.preventDefault();
             isDrawing = false;
             
-            // Effetto dissolvenza rapida seguito da reset totale dei pixel
+            // Dissolvenza e azzeramento
             ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             setTimeout(() => {
                 clearCanvasCompletely();
-            }, 100);
+            }, 80);
 
             lastTapTime = 0;
             return;
         }
+        
         lastTapTime = currentTime;
+        // Se è solo il primo tocco nell'angolo, non avvia il tracciamento
+        return;
     }
 
-    // Se non è un double tap di cancellazione, avvia il disegno normale
+    // Se siamo fuori dall'angolo di cancellazione, avvia il disegno normale
     isDrawing = true;
     draw(e);
 }
@@ -84,8 +96,8 @@ function draw(e) {
     ctx.lineCap = 'round';
     ctx.strokeStyle = currentColor;
 
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const x = e.clientX;
+    const y = e.clientY;
 
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -93,6 +105,7 @@ function draw(e) {
     ctx.moveTo(x, y);
 }
 
+// Eventi Pointer Unificati
 canvas.addEventListener('pointerdown', startDrawing);
 canvas.addEventListener('pointermove', draw);
 canvas.addEventListener('pointerup', stopDrawing);
@@ -109,6 +122,8 @@ function toggleMode() {
     const canvasMode = document.getElementById('mode-canvas');
     const cardsMode = document.getElementById('mode-cards');
     
-    canvasMode.classList.toggle('active');
-    cardsMode.classList.toggle('active');
+    if (canvasMode && cardsMode) {
+        canvasMode.classList.toggle('active');
+        cardsMode.classList.toggle('active');
+    }
 }
