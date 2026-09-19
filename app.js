@@ -2,7 +2,6 @@ let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
-let isErasing = false;
 
 // Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
@@ -12,7 +11,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Reset totale profondo (elimina ogni micro-alone)
+// Reset totale profondo
 function clearCanvasCompletely() {
     canvas.width = window.innerWidth;
     ctx.beginPath();
@@ -36,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Gestione Disegno Libero
 function startDrawing(e) {
-    isErasing = false;
     isDrawing = true;
     draw(e);
 }
@@ -82,26 +80,29 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio: Asse Invertito
+// TEST LETTURA SENSORI (Mostra i gradi sullo schermo)
 window.addEventListener('deviceorientation', (e) => {
-    if (isDrawing) return;
+    const beta = Math.round(e.beta || 0);
+    const gamma = Math.round(e.gamma || 0);
 
-    const beta = e.beta;   
-    const gamma = e.gamma; 
+    // Rimuove eventuale riquadro precedente per aggiornare
+    const oldDebug = document.getElementById('sensor-debug');
+    if (oldDebug) oldDebug.remove();
 
-    // Asse Invertito: Scatta solo se beta supera 70° o scende sotto -30°
-    // Lascia la fascia centrale (verticale/impugnatura) completamente immune.
-    const isEraseZone = (beta > 70 || beta < -30);
-    const isStableSide = Math.abs(gamma) < 25;
+    // Crea un riquadro visibile in alto a sinistra
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'sensor-debug';
+    debugDiv.style.position = 'fixed';
+    debugDiv.style.top = '10px';
+    debugDiv.style.left = '10px';
+    debugDiv.style.background = 'rgba(0,0,0,0.8)';
+    debugDiv.style.color = '#fff';
+    debugDiv.style.padding = '8px 12px';
+    debugDiv.style.borderRadius = '8px';
+    debugDiv.style.fontSize = '14px';
+    debugDiv.style.zIndex = '9999';
+    debugDiv.style.pointerEvents = 'none';
+    debugDiv.innerText = `BETA: ${beta} | GAMMA: ${gamma}`;
 
-    if (isEraseZone && isStableSide) {
-        isErasing = true;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else {
-        if (isErasing) {
-            clearCanvasCompletely();
-            isErasing = false;
-        }
-    }
+    document.body.appendChild(debugDiv);
 });
