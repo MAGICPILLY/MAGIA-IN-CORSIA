@@ -1,8 +1,8 @@
 {
   "name": "Magic Canvas",
   "short_name": "MagicCanvas",
-  "start_url": "/MAGIA-IN-CORSIA/",
-  "scope": "/MAGIA-IN-CORSIA/",
+  "start_url": "/magia-in-corsia/",
+  "scope": "/magia-in-corsia/",
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],
   "background_color": "#ffffff",
