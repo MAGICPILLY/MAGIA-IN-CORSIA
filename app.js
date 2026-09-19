@@ -11,7 +11,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Cambio colore immediato su sfioramento
+// Cambio colore istantaneo al tocco
 document.addEventListener('DOMContentLoaded', () => {
     const colorButtons = document.querySelectorAll('.color-btn');
     
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Gestione Disegno
+// Gestione Disegno Libero
 function startDrawing(e) {
     isDrawing = true;
     draw(e);
@@ -59,7 +59,7 @@ canvas.addEventListener('pointermove', draw);
 canvas.addEventListener('pointerup', stopDrawing);
 canvas.addEventListener('pointerleave', stopDrawing);
 
-// Riconosce 3 dita per cambiare modalità
+// Cambio Modalità Nascosto con Gesture a 3 dita
 window.addEventListener('touchstart', (e) => {
     if (e.touches.length === 3) {
         toggleMode();
@@ -74,12 +74,16 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio (Dissolvenza Nascosta)
+// Sensore Giroscopio (Dissolvenza Controllata e Graduale)
 window.addEventListener('deviceorientation', (e) => {
-    const beta = e.beta; // Inclinazione avanti/indietro (-180 a 180)
+    const beta = e.beta;   // Inclinazione avanti/indietro (-180 a 180)
+    const gamma = e.gamma; // Inclinazione sinistra/destra (-90 a 90)
 
-    if (beta > 65) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    // Si attiva SOLO se il telefono è inclinato in avanti (beta > 55)
+    // e NON se viene ruotato/inclinato di lato (gamma tra -25 e 25)
+    if (beta > 55 && Math.abs(gamma) < 25) {
+        // Opacità a 0.03 per una sfumatura lenta e magica (circa 2-3 secondi)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 });
