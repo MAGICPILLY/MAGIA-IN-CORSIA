@@ -12,7 +12,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Reset totale profondo (elimina ogni alone grigio)
+// Reset totale profondo (elimina ogni micro-alone grigio)
 function clearCanvasCompletely() {
     canvas.width = window.innerWidth;
     ctx.beginPath();
@@ -82,23 +82,23 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio Ricalibrato sull'hardware del dispositivo
+// Sensore Giroscopio: Modalità Invertita (Verticale = Disegno, Orizzontale = Cancella)
 window.addEventListener('deviceorientation', (e) => {
     if (isDrawing) return;
 
-    const beta = Math.abs(e.beta || 0);
-    const gamma = Math.abs(e.gamma || 0);
+    const absBeta = Math.abs(e.beta || 0);
+    const absGamma = Math.abs(e.gamma || 0);
 
-    // La cancellazione scatta ESCLUSIVAMENTE quando lo smartphone viene sdraiato in orizzontale (beta < 30)
-    // In posizione verticale (beta > 60) il disegno rimane totalmente protetto.
-    const isFlatForErase = (beta < 30 && gamma < 30);
+    // Scatta la cancellazione SOLO quando il telefono scende verso la posizione orizzontale (beta < 25)
+    // Quando è in verticale (beta > 45), la cancellazione è totalmente disattivata.
+    const isHorizontal = absBeta < 25 && absGamma < 30;
 
-    if (isFlatForErase) {
+    if (isHorizontal) {
         isErasing = true;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
-        // Quando lo si riporta in verticale, pialla tutto a bianco puro
+        // Appena torna in posizione verticale, pialla del tutto il canvas
         if (isErasing) {
             clearCanvasCompletely();
             isErasing = false;
