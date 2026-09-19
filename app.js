@@ -2,7 +2,7 @@ let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
-let eraseStep = 0;
+let isErasing = false;
 
 // Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
@@ -14,7 +14,6 @@ resizeCanvas();
 
 // Reset totale profondo (elimina ogni micro-alone grigio)
 function clearCanvasCompletely() {
-    // Il reset della larghezza distrugge la memoria dei pixel a livello hardware
     canvas.width = window.innerWidth;
     ctx.beginPath();
 }
@@ -37,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Gestione Disegno Libero
 function startDrawing(e) {
+    // Blocca cancellazioni accidentali mentre disegni
+    isErasing = false;
     isDrawing = true;
     draw(e);
 }
@@ -82,30 +83,29 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio con azzeramento hardware del canvas
+// Sensore Giroscopio: Attivazione INCLINANDO VERSO DI TE
 window.addEventListener('deviceorientation', (e) => {
-    const beta = e.beta;   // Inclinazione avanti/indietro (-180 a 180)
-    const gamma = e.gamma; // Inclinazione sinistra/destra (-90 a 90)
+    // Ignora il giroscopio mentre il dito sta disegnando
+    if (isDrawing) return;
 
-    const isTiltedForward = (beta < -20 || beta > 110);
+    const beta = e.beta;   // Inclinazione avanti/indietro
+    const gamma = e.gamma; // Inclinazione sinistra/destra
+
+    // Scatta SOLO quando pieghi la parte superiore del telefono VERSO DI TE (beta > 50)
+    // e il telefono è stabile sull'asse laterale
+    const isTiltedTowardsMe = (beta > 50);
     const isStableSide = Math.abs(gamma) < 30;
 
-    if (isTiltedForward && isStableSide) {
-        eraseStep++;
-        
-        // Sfumatura iniziale graduale
+    if (isTiltedTowardsMe && isStableSide) {
+        isErasing = true;
+        // Sfumatura rapida
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Dopo la sfumatura (circa 8-10 frame), esegue il reset totale dei pixel
-        if (eraseStep > 8) {
-            clearCanvasCompletely();
-        }
     } else {
-        // Se la cancellazione si era avviata, al ritorno in posizione pulisce del tutto
-        if (eraseStep > 0) {
+        // Quando il telefono torna dritto, se era attiva la cancellazione, pialla tutto a zero
+        if (isErasing) {
             clearCanvasCompletely();
-            eraseStep = 0;
+            isErasing = false;
         }
     }
 });
