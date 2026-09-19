@@ -1,8 +1,10 @@
 {
   "name": "Magic Canvas",
   "short_name": "MagicCanvas",
-  "start_url": "./index.html",
+  "start_url": "/magic-canvas/",
+  "scope": "/magic-canvas/",
   "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "orientation": "portrait",
