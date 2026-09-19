@@ -1,95 +1,83 @@
-// --- MODALITÀ CANVAS ---
+let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
+let isDrawing = false;
 
+// Ridimensionamento dinamico del canvas
 function resizeCanvas() {
     canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight - 80;
+    canvas.height = window.innerHeight;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-let drawing = false;
-let currentColor = '#e74c3c';
-
+// Impostazione colore reattiva (senza ritardo)
 function setColor(color) {
     currentColor = color;
 }
 
-canvas.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
-        drawing = true;
-        ctx.beginPath();
-        ctx.moveTo(e.touches[0].clientX, e.touches[0].clientY);
-    }
+// Associa l'evento di tocco immediato ai bottoni colore
+document.querySelectorAll('.color-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const bg = e.target.style.background || e.target.style.backgroundColor;
+        setColor(bg);
+    });
 });
 
-canvas.addEventListener('touchmove', (e) => {
-    if (drawing && e.touches.length === 1) {
-        ctx.lineTo(e.touches[0].clientX, e.touches[0].clientY);
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = 8;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-    }
-});
-
-canvas.addEventListener('touchend', () => { drawing = false; });
-
-// TRIGGER DISSOLVENZA (Giroscopio o Triplo Tap)
-function vanishDrawing() {
-    let opacity = 1.0;
-    const fadeInterval = setInterval(() => {
-        if (opacity <= 0) {
-            clearInterval(fadeInterval);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        } else {
-            opacity -= 0.1;
-            ctx.fillStyle = `rgba(255, 255, 255, 0.15)`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-    }, 30);
+// Gestione Disegno
+function startDrawing(e) {
+    isDrawing = true;
+    draw(e);
 }
 
-// Inclinazione telefono per dissolvere
-window.addEventListener('deviceorientation', (event) => {
-    if (event.beta && event.beta > 65) { // Inclinato verso il basso
-        vanishDrawing();
-    }
-});
+function stopDrawing() {
+    isDrawing = false;
+    ctx.beginPath();
+}
 
-// --- CAMBIO MODALITÀ NASCOSTO (Swipe a 3 Dita) ---
-let startX = 0;
+function draw(e) {
+    if (!isDrawing) return;
+    
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = currentColor;
 
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+}
+
+canvas.addEventListener('pointerdown', startDrawing);
+canvas.addEventListener('pointermove', draw);
+canvas.addEventListener('pointerup', stopDrawing);
+canvas.addEventListener('pointerleave', stopDrawing);
+
+// Riconosce 3 dita per cambiare modalità
 window.addEventListener('touchstart', (e) => {
     if (e.touches.length === 3) {
-        startX = e.touches[0].clientX;
+        toggleMode();
     }
 });
 
-window.addEventListener('touchend', (e) => {
-    if (startX !== 0) {
-        const modeCanvas = document.getElementById('mode-canvas');
-        const modeCards = document.getElementById('mode-cards');
+function toggleMode() {
+    const canvasMode = document.getElementById('mode-canvas');
+    const cardsMode = document.getElementById('mode-cards');
+    
+    canvasMode.classList.toggle('active');
+    cardsMode.classList.toggle('active');
+}
 
-        if (modeCanvas.classList.contains('active')) {
-            modeCanvas.classList.remove('active');
-            modeCards.classList.add('active');
-        } else {
-            modeCards.classList.remove('active');
-            modeCanvas.classList.add('active');
-        }
-        startX = 0;
+// Sensore Giroscopio (Dissolvenza Nascosta)
+window.addEventListener('deviceorientation', (e) => {
+    const beta = e.beta; // Inclinazione avanti/indietro (-180 a 180)
+
+    if (beta > 65) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 });
-
-// --- MODALITÀ CARTE ---
-function selectCard(index) {
-    const cards = document.querySelectorAll('.card-item');
-    cards.forEach(c => c.classList.remove('selected'));
-    cards[index].classList.add('selected');
-}
-// --- REGISTRAZIONE SERVICE WORKER (Per Schermo Intero & Offline) ---
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-}
