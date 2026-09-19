@@ -12,7 +12,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Reset totale profondo (elimina ogni micro-alone grigio)
+// Reset totale profondo (elimina ogni micro-alone)
 function clearCanvasCompletely() {
     canvas.width = window.innerWidth;
     ctx.beginPath();
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Gestione Disegno Libero
 function startDrawing(e) {
-    // Blocca cancellazioni accidentali mentre disegni
+    // Blocca cancellazioni accidentali mentre si disegna
     isErasing = false;
     isDrawing = true;
     draw(e);
@@ -83,26 +83,26 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio: Attivazione INCLINANDO VERSO DI TE
+// Sensore Giroscopio: Attivazione in posizione ORIZZONTALE
 window.addEventListener('deviceorientation', (e) => {
-    // Ignora il giroscopio mentre il dito sta disegnando
+    // Ignora il giroscopio se il dito sta disegnando
     if (isDrawing) return;
 
-    const beta = e.beta;   // Inclinazione avanti/indietro
+    const beta = e.beta;   // Inclinazione dritto/orizzontale
     const gamma = e.gamma; // Inclinazione sinistra/destra
 
-    // Scatta SOLO quando pieghi la parte superiore del telefono VERSO DI TE (beta > 50)
-    // e il telefono è stabile sull'asse laterale
-    const isTiltedTowardsMe = (beta > 50);
-    const isStableSide = Math.abs(gamma) < 30;
+    // In posizione verticale/impugnatura beta è circa 60°-90°.
+    // Quando lo sdrai quasi in orizzontale, beta scende sotto i 25°.
+    const isHorizontal = (beta < 25 && beta > -25);
+    const isStableSide = Math.abs(gamma) < 35;
 
-    if (isTiltedTowardsMe && isStableSide) {
+    if (isHorizontal && isStableSide) {
         isErasing = true;
-        // Sfumatura rapida
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        // Dissolvenza veloce
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
-        // Quando il telefono torna dritto, se era attiva la cancellazione, pialla tutto a zero
+        // Appena rialzi il telefono in verticale, formatta la tela a bianco puro
         if (isErasing) {
             clearCanvasCompletely();
             isErasing = false;
