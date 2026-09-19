@@ -2,7 +2,7 @@ let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
-let eraseCounter = 0;
+let eraseStep = 0;
 
 // Ridimensionamento dinamico del canvas
 function resizeCanvas() {
@@ -75,27 +75,30 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio (Dissolvenza Flessibile & Pulizia Completa)
+// Sensore Giroscopio con pulizia totale priva di aloni
 window.addEventListener('deviceorientation', (e) => {
     const beta = e.beta;   // Inclinazione avanti/indietro (-180 a 180)
     const gamma = e.gamma; // Inclinazione sinistra/destra (-90 a 90)
 
-    // Si attiva SOLO quando il telefono viene piegato decisamente in avanti/verso il basso
-    // (beta < -20 oppure beta > 110 a seconda dell'orientamento del sensore)
     const isTiltedForward = (beta < -20 || beta > 110);
     const isStableSide = Math.abs(gamma) < 30;
 
     if (isTiltedForward && isStableSide) {
-        // Applica dissolvenza
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        eraseStep++;
+        
+        // Applica strati di bianco per la sfumatura iniziale
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        eraseCounter++;
 
-        // Dopo pochi frame di dissolvenza, pulisce totalmente per non lasciare aloni
-        if (eraseCounter > 20) {
+        // Dopo circa 10 passaggi (meno di un secondo), formatta del tutto la tela
+        if (eraseStep > 10) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     } else {
-        eraseCounter = 0;
+        // Quando il telefono torna in posizione normale, se si era attivata la cancellazione, fa reset totale
+        if (eraseStep > 0) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            eraseStep = 0;
+        }
     }
 });
