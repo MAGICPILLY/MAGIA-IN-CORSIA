@@ -11,11 +11,22 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Reset totale profondo
-function clearCanvasCompletely() {
-    canvas.width = window.innerWidth;
-    ctx.beginPath();
-}
+// Crea il riquadro di debug fisso
+const debugDiv = document.createElement('div');
+debugDiv.id = 'sensor-debug';
+debugDiv.style.position = 'fixed';
+debugDiv.style.top = '10px';
+debugDiv.style.left = '10px';
+debugDiv.style.background = 'rgba(0,0,0,0.85)';
+debugDiv.style.color = '#00ff00';
+debugDiv.style.padding = '10px 14px';
+debugDiv.style.borderRadius = '8px';
+debugDiv.style.fontSize = '14px';
+debugDiv.style.fontFamily = 'monospace';
+debugDiv.style.zIndex = '99999';
+debugDiv.style.pointerEvents = 'none';
+debugDiv.innerText = 'ATTESA SENSORE...';
+document.body.appendChild(debugDiv);
 
 // Cambio colore istantaneo al tocco
 document.addEventListener('DOMContentLoaded', () => {
@@ -65,44 +76,11 @@ canvas.addEventListener('pointermove', draw);
 canvas.addEventListener('pointerup', stopDrawing);
 canvas.addEventListener('pointerleave', stopDrawing);
 
-// Cambio Modalità Nascosto con Gesture a 3 dita
-window.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 3) {
-        toggleMode();
-    }
-});
-
-function toggleMode() {
-    const canvasMode = document.getElementById('mode-canvas');
-    const cardsMode = document.getElementById('mode-cards');
-    
-    canvasMode.classList.toggle('active');
-    cardsMode.classList.toggle('active');
+// Lettura Giroscopio con fallback
+function handleOrientation(e) {
+    const beta = e.beta !== null ? Math.round(e.beta) : 'N/A';
+    const gamma = e.gamma !== null ? Math.round(e.gamma) : 'N/A';
+    debugDiv.innerText = `BETA: ${beta} | GAMMA: ${gamma}`;
 }
 
-// TEST LETTURA SENSORI (Mostra i gradi sullo schermo)
-window.addEventListener('deviceorientation', (e) => {
-    const beta = Math.round(e.beta || 0);
-    const gamma = Math.round(e.gamma || 0);
-
-    // Rimuove eventuale riquadro precedente per aggiornare
-    const oldDebug = document.getElementById('sensor-debug');
-    if (oldDebug) oldDebug.remove();
-
-    // Crea un riquadro visibile in alto a sinistra
-    const debugDiv = document.createElement('div');
-    debugDiv.id = 'sensor-debug';
-    debugDiv.style.position = 'fixed';
-    debugDiv.style.top = '10px';
-    debugDiv.style.left = '10px';
-    debugDiv.style.background = 'rgba(0,0,0,0.8)';
-    debugDiv.style.color = '#fff';
-    debugDiv.style.padding = '8px 12px';
-    debugDiv.style.borderRadius = '8px';
-    debugDiv.style.fontSize = '14px';
-    debugDiv.style.zIndex = '9999';
-    debugDiv.style.pointerEvents = 'none';
-    debugDiv.innerText = `BETA: ${beta} | GAMMA: ${gamma}`;
-
-    document.body.appendChild(debugDiv);
-});
+window.addEventListener('deviceorientation', handleOrientation, true);
