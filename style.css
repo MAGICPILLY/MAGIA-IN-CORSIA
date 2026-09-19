@@ -1,0 +1,81 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #ffffff;
+    font-family: sans-serif;
+}
+
+.mode {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.mode.active {
+    display: block;
+}
+
+/* Modalità Canvas */
+#paintCanvas {
+    display: block;
+    width: 100vw;
+    height: calc(100vh - 80px);
+    background: #ffffff;
+}
+
+.color-palette {
+    height: 80px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
+}
+
+.color-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Modalità Carte */
+.card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    height: 100vh;
+}
+
+.card-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 5rem;
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-item.selected {
+    border-color: #3498db;
+    background: #e8f4fc;
+}
