@@ -2,11 +2,11 @@ self.addEventListener('install', (e) => {
     e.waitUntil(
         caches.open('magic-canvas-v1').then((cache) => {
             return cache.addAll([
-                './',
-                './index.html',
-                './style.css',
-                './app.js',
-                './manifest.json'
+                '/MAGIA-IN-CORSIA/',
+                '/MAGIA-IN-CORSIA/index.html',
+                '/MAGIA-IN-CORSIA/style.css',
+                '/MAGIA-IN-CORSIA/app.js',
+                '/MAGIA-IN-CORSIA/manifest.json'
             ]);
         })
     );
