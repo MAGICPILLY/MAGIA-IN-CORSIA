@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Gestione Disegno Libero
 function startDrawing(e) {
-    // Blocca cancellazioni accidentali mentre si disegna
     isErasing = false;
     isDrawing = true;
     draw(e);
@@ -83,28 +82,23 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio: Attivazione ESCLUSIVA in posizione ORIZZONTALE (piatto)
+// Sensore Giroscopio: Asse Invertito
 window.addEventListener('deviceorientation', (e) => {
-    // Ignora il giroscopio se l'utente sta disegnando
     if (isDrawing) return;
 
-    const beta = e.beta;   // Inclinazione avanti/indietro
-    const gamma = e.gamma; // Inclinazione sinistra/destra
+    const beta = e.beta;   
+    const gamma = e.gamma; 
 
-    // Telefono piatto/sdraiato orizzontalmente:
-    // beta è compreso strettamente tra 0° e 25° (non verticale, non verso il petto)
-    // gamma è compreso strettamente tra -20° e 20°
-    const isFlatHorizontal = (beta >= 0 && beta <= 25);
-    const isStableSide = Math.abs(gamma) < 20;
+    // Asse Invertito: Scatta solo se beta supera 70° o scende sotto -30°
+    // Lascia la fascia centrale (verticale/impugnatura) completamente immune.
+    const isEraseZone = (beta > 70 || beta < -30);
+    const isStableSide = Math.abs(gamma) < 25;
 
-    if (isFlatHorizontal && isStableSide) {
+    if (isEraseZone && isStableSide) {
         isErasing = true;
-        // Dissolvenza graduale
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     } else {
-        // Appena il telefono esce dalla posizione orizzontale (es. torna dritto in verticale),
-        // se era partita la cancellazione, fa il reset pulito a zero aloni.
         if (isErasing) {
             clearCanvasCompletely();
             isErasing = false;
