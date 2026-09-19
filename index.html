@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Magic Canvas</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+    <!-- MODALITÀ 1: Disegno Libero -->
+    <div id="mode-canvas" class="mode active">
+        <canvas id="paintCanvas"></canvas>
+        <div class="color-palette">
+            <button class="color-btn" style="background: #e74c3c;" onclick="setColor('#e74c3c')"></button>
+            <button class="color-btn" style="background: #3498db;" onclick="setColor('#3498db')"></button>
+            <button class="color-btn" style="background: #f1c40f;" onclick="setColor('#f1c40f')"></button>
+            <button class="color-btn" style="background: #2ecc71;" onclick="setColor('#2ecc71')"></button>
+        </div>
+    </div>
+
+    <!-- MODALITÀ 2: Carte / Figure -->
+    <div id="mode-cards" class="mode">
+        <div class="card-grid">
+            <div class="card-item" onclick="selectCard(0)">⭐</div>
+            <div class="card-item" onclick="selectCard(1)">🎈</div>
+            <div class="card-item" onclick="selectCard(2)">🚀</div>
+            <div class="card-item" onclick="selectCard(3)">👑</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
