@@ -2,6 +2,7 @@ let currentColor = '#e74c3c';
 const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
+let isErasing = false;
 
 // Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
@@ -11,22 +12,11 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Crea il riquadro di debug fisso
-const debugDiv = document.createElement('div');
-debugDiv.id = 'sensor-debug';
-debugDiv.style.position = 'fixed';
-debugDiv.style.top = '10px';
-debugDiv.style.left = '10px';
-debugDiv.style.background = 'rgba(0,0,0,0.85)';
-debugDiv.style.color = '#00ff00';
-debugDiv.style.padding = '10px 14px';
-debugDiv.style.borderRadius = '8px';
-debugDiv.style.fontSize = '14px';
-debugDiv.style.fontFamily = 'monospace';
-debugDiv.style.zIndex = '99999';
-debugDiv.style.pointerEvents = 'none';
-debugDiv.innerText = 'ATTESA SENSORE...';
-document.body.appendChild(debugDiv);
+// Reset totale profondo (elimina ogni alone grigio)
+function clearCanvasCompletely() {
+    canvas.width = window.innerWidth;
+    ctx.beginPath();
+}
 
 // Cambio colore istantaneo al tocco
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Gestione Disegno Libero
 function startDrawing(e) {
+    isErasing = false;
     isDrawing = true;
     draw(e);
 }
@@ -76,11 +67,41 @@ canvas.addEventListener('pointermove', draw);
 canvas.addEventListener('pointerup', stopDrawing);
 canvas.addEventListener('pointerleave', stopDrawing);
 
-// Lettura Giroscopio con fallback
-function handleOrientation(e) {
-    const beta = e.beta !== null ? Math.round(e.beta) : 'N/A';
-    const gamma = e.gamma !== null ? Math.round(e.gamma) : 'N/A';
-    debugDiv.innerText = `BETA: ${beta} | GAMMA: ${gamma}`;
+// Cambio Modalità Nascosto con Gesture a 3 dita
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 3) {
+        toggleMode();
+    }
+});
+
+function toggleMode() {
+    const canvasMode = document.getElementById('mode-canvas');
+    const cardsMode = document.getElementById('mode-cards');
+    
+    canvasMode.classList.toggle('active');
+    cardsMode.classList.toggle('active');
 }
 
-window.addEventListener('deviceorientation', handleOrientation, true);
+// Sensore Giroscopio Ricalibrato sull'hardware del dispositivo
+window.addEventListener('deviceorientation', (e) => {
+    if (isDrawing) return;
+
+    const beta = Math.abs(e.beta || 0);
+    const gamma = Math.abs(e.gamma || 0);
+
+    // La cancellazione scatta ESCLUSIVAMENTE quando lo smartphone viene sdraiato in orizzontale (beta < 30)
+    // In posizione verticale (beta > 60) il disegno rimane totalmente protetto.
+    const isFlatForErase = (beta < 30 && gamma < 30);
+
+    if (isFlatForErase) {
+        isErasing = true;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        // Quando lo si riporta in verticale, pialla tutto a bianco puro
+        if (isErasing) {
+            clearCanvasCompletely();
+            isErasing = false;
+        }
+    }
+});
