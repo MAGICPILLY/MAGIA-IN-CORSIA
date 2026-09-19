@@ -3,6 +3,7 @@ const canvas = document.getElementById('paintCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
 let isErasing = false;
+let flatFramesCount = 0;
 
 // Ridimensionamento e reset nativo del canvas
 function resizeCanvas() {
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function startDrawing(e) {
     isErasing = false;
     isDrawing = true;
+    flatFramesCount = 0;
     draw(e);
 }
 
@@ -82,23 +84,37 @@ function toggleMode() {
     cardsMode.classList.toggle('active');
 }
 
-// Sensore Giroscopio: Modalità Invertita (Verticale = Disegno, Orizzontale = Cancella)
-window.addEventListener('deviceorientation', (e) => {
-    if (isDrawing) return;
+// Gestione Sensori con Differenziale di Gravità Diretto
+window.addEventListener('devicemotion', (e) => {
+    // Se l'utente sta toccando/disegnando, blocca qualsiasi scansione
+    if (isDrawing) {
+        flatFramesCount = 0;
+        return;
+    }
 
-    const absBeta = Math.abs(e.beta || 0);
-    const absGamma = Math.abs(e.gamma || 0);
+    const acc = e.accelerationIncludingGravity;
+    if (!acc) return;
 
-    // Scatta la cancellazione SOLO quando il telefono scende verso la posizione orizzontale (beta < 25)
-    // Quando è in verticale (beta > 45), la cancellazione è totalmente disattivata.
-    const isHorizontal = absBeta < 25 && absGamma < 30;
+    const absX = Math.abs(acc.x || 0);
+    const absY = Math.abs(acc.y || 0);
+    const absZ = Math.abs(acc.z || 0);
 
-    if (isHorizontal) {
-        isErasing = true;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Condizione fisica di "Telefono Sdraiato Piatto":
+    // La gravità spinge quasi interamente sull'asse Z (perpendicolare allo schermo > 8.0 m/s²)
+    // e gli assi X e Y (lungo la superficie dello schermo) sono quasi azzerati (< 3.5 m/s²).
+    const isPhysicalFlat = absZ > 8.0 && absY < 3.5 && absX < 3.5;
+
+    if (isPhysicalFlat) {
+        flatFramesCount++;
+        // Richiede almeno 4 frame consecutivi in posizione orizzontale prima di attivare la cancellazione
+        if (flatFramesCount > 4) {
+            isErasing = true;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
     } else {
-        // Appena torna in posizione verticale, pialla del tutto il canvas
+        flatFramesCount = 0;
+        // Appena il telefono torna in posizione verticale/impugnata, se era avviata la cancellazione pialla la tela
         if (isErasing) {
             clearCanvasCompletely();
             isErasing = false;
